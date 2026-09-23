@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "tailwindcss/utilities";
+
+@theme {
+  --color-primary: #ea580c;
+  --color-primary-light: #ffedd5;
+  --font-sans: "Inter", "system-ui", "sans-serif";
+}
+
+/* Hide scrollbar for category nav but allow scrolling */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
