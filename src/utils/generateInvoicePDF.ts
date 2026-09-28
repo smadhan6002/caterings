@@ -1,0 +1,257 @@
+/**
+ * generateInvoicePDF — generates and downloads a professional catering invoice PDF
+ * Uses jsPDF + jspdf-autotable
+ */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import type { Order } from '../types/admin';
+import type { Invoice } from '../types/admin';
+import { siteConfig } from '../config/site';
+
+function formatDate(isoDate: string): string {
+  if (!isoDate) return '';
+  const d = new Date(isoDate.includes('T') ? isoDate : isoDate + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function paymentStatus(order: Order): string {
+  const remaining = order.totalAmount - order.advanceAmount - order.balancePaid;
+  if (remaining <= 0) return 'FULLY PAID';
+  if (order.advanceAmount > 0 && order.balancePaid > 0) return 'PARTIALLY PAID';
+  if (order.advanceAmount > 0) return 'ADVANCE PAID';
+  return 'UNPAID';
+}
+
+// jsPDF Helvetica does NOT support the Rs. symbol — use "Rs." text instead
+function inr(amount: number): string {
+  return `Rs. ${amount.toLocaleString('en-IN')}`;
+}
+
+export function generateInvoicePDF(order: Order, invoice: Invoice): void {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const primaryColor: [number, number, number] = [234, 88, 12];
+  const darkColor: [number, number, number] = [30, 41, 59];
+  const lightGray: [number, number, number] = [248, 250, 252];
+  const borderGray: [number, number, number] = [226, 232, 240];
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  let y = 0;
+
+  // ─── HEADER BAND ───────────────────────────────────────
+  doc.setFillColor(...primaryColor);
+  doc.rect(0, 0, pageW, 34, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(siteConfig.name, 14, 13);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Ph: ${siteConfig.whatsappNumber}`, 14, 21);
+  doc.text('Professional Catering Services', 14, 28);
+
+  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INVOICE', pageW - 14, 20, { align: 'right' });
+
+  y = 44;
+
+  // ─── META + BILL TO (2 columns) ──────────────────────────
+  doc.setTextColor(...darkColor);
+  doc.setFontSize(9);
+
+  const metaLeft = 14;
+  const metaRight = pageW / 2 + 8;
+  const colLabelW = 28;
+
+  const leftRows = [
+    ['Invoice No :', invoice.id],
+    ['Order ID   :', order.id],
+    ['Invoice Date:', formatDate(invoice.generatedAt)],
+    ['Order Date  :', formatDate(order.orderDate)],
+  ];
+
+  for (let i = 0; i < leftRows.length; i++) {
+    doc.setFont('helvetica', 'bold');
+    doc.text(leftRows[i][0], metaLeft, y + i * 7);
+    doc.setFont('helvetica', 'normal');
+    doc.text(leftRows[i][1], metaLeft + colLabelW + 2, y + i * 7);
+  }
+
+  // Bill To
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...primaryColor);
+  doc.text('BILL TO', metaRight, y);
+  doc.setTextColor(...darkColor);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(order.customerName, metaRight, y + 8);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Mobile  : ${order.mobile}`, metaRight, y + 16);
+  if (order.eventType) {
+    doc.text(`Event   : ${order.eventType}`, metaRight, y + 23);
+  }
+  if (order.eventAddress) {
+    const wrapped = doc.splitTextToSize(`Address : ${order.eventAddress}`, pageW - metaRight - 14);
+    doc.text(wrapped, metaRight, y + (order.eventType ? 30 : 23));
+  }
+  if (order.guestCount) {
+    doc.text(`Guests  : ${order.guestCount}`, metaRight, y + 38);
+  }
+
+  y += 40;
+
+  // ─── DIVIDER ──────────────────────────────────────────
+  doc.setDrawColor(...primaryColor);
+  doc.setLineWidth(0.5);
+  doc.line(14, y, pageW - 14, y);
+  y += 7;
+
+  // ─── SECTION TITLE ─────────────────────────────────────
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...primaryColor);
+  doc.text('ITEMS ORDERED', 14, y);
+  y += 4;
+
+  // ─── ITEMS TABLE ───────────────────────────────────────
+  const tableBody = order.items.map((item, i) => [
+    String(i + 1),
+    item.dishName,
+    item.categoryId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    String(item.quantity),
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    head: [['#', 'Dish Name', 'Category', 'Qty']],
+    body: tableBody,
+    theme: 'striped',
+    headStyles: {
+      fillColor: primaryColor,
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 9,
+    },
+    bodyStyles: { fontSize: 9, textColor: darkColor },
+    alternateRowStyles: { fillColor: lightGray },
+    columnStyles: {
+      0: { cellWidth: 12, halign: 'center' },
+      1: { cellWidth: 'auto' },
+      2: { cellWidth: 55 },
+      3: { cellWidth: 18, halign: 'center' },
+    },
+    margin: { left: 14, right: 14 },
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // ─── PAYMENT SUMMARY BOX ──────────────────────────────
+  const boxW = 100;
+  const boxX = pageW - 14 - boxW;
+  const remaining = Math.max(0, order.totalAmount - order.advanceAmount - order.balancePaid);
+  const status = paymentStatus(order);
+  const boxH = 68;
+
+  // Add page if not enough space
+  if (y + boxH > pageH - 20) {
+    doc.addPage();
+    y = 16;
+  }
+
+  // Box background
+  doc.setFillColor(...lightGray);
+  doc.setDrawColor(...borderGray);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(boxX, y, boxW, boxH, 2, 2, 'FD');
+
+  // Box header stripe
+  doc.setFillColor(...primaryColor);
+  doc.roundedRect(boxX, y, boxW, 10, 2, 2, 'F');
+  doc.rect(boxX, y + 5, boxW, 5, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PAYMENT SUMMARY', boxX + boxW / 2, y + 7, { align: 'center' });
+
+  const lx = boxX + 6;
+  const rx = boxX + boxW - 6;
+  let ry = y + 18;
+  const rowH = 9;
+
+  const payRows = [
+    ['Total Amount', inr(order.totalAmount)],
+    ['Advance Paid', inr(order.advanceAmount)],
+    ['Balance Paid', inr(order.balancePaid)],
+    ['Balance Due ', inr(remaining)],
+  ];
+
+  doc.setTextColor(...darkColor);
+  doc.setFontSize(9);
+  for (const [label, val] of payRows) {
+    doc.setFont('helvetica', 'normal');
+    doc.text(label, lx, ry);
+    doc.setFont('helvetica', 'bold');
+    doc.text(val, rx, ry, { align: 'right' });
+    doc.setDrawColor(...borderGray);
+    doc.setLineWidth(0.15);
+    doc.line(lx, ry + 2.5, rx, ry + 2.5);
+    ry += rowH;
+  }
+
+  // Status badge
+  const badgeColor: [number, number, number] =
+    remaining <= 0 ? [22, 163, 74] : order.advanceAmount > 0 ? [234, 88, 12] : [220, 38, 38];
+  doc.setFillColor(...badgeColor);
+  doc.roundedRect(lx, ry + 1, boxW - 12, 9, 1.5, 1.5, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text(status, lx + (boxW - 12) / 2, ry + 7, { align: 'center' });
+
+  // ─── NOTES (left of payment box) ────────────────────────
+  if (order.notes && order.notes.trim()) {
+    const notesW = boxX - metaLeft - 8;
+    doc.setTextColor(...darkColor);
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Notes:', metaLeft, y + 8);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const wrapped = doc.splitTextToSize(order.notes, notesW);
+    doc.text(wrapped, metaLeft, y + 16);
+  }
+
+  y = y + boxH + 12;
+
+  // ─── THANK YOU ───────────────────────────────────────────
+  if (y < pageH - 30) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(120, 120, 120);
+    doc.text('Thank you for your business! We wish you a wonderful event.', metaLeft, y);
+  }
+
+  // ─── FOOTER BAND ────────────────────────────────────────
+  const footerY = pageH - 12;
+  doc.setFillColor(...primaryColor);
+  doc.rect(0, footerY - 3, pageW, 15, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(
+    `${siteConfig.name}  |  Ph: ${siteConfig.whatsappNumber}  |  Generated: ${new Date().toLocaleDateString('en-IN')}`,
+    pageW / 2,
+    footerY + 4,
+    { align: 'center' }
+  );
+
+  // ─── SAVE ───────────────────────────────────────────────
+  doc.save(`Invoice-${invoice.id}.pdf`);
+}
