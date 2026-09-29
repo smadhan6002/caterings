@@ -1,29 +1,20 @@
 import React from 'react';
 import type { MenuItem } from '../data/menu';
 import { useCart } from '../context/CartContext';
-import { QuantityControl } from './QuantityControl';
+import { Check } from 'lucide-react';
 
 interface MenuItemCardProps {
   item: MenuItem;
 }
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item }) => {
-  const { cartItems, addItem, updateQuantity } = useCart();
+  const { cartItems, addItem } = useCart();
   
-  const cartItem = cartItems.find((i) => i.id === item.id);
-  const quantity = cartItem?.quantity || 0;
+  const isAdded = cartItems.some((i) => i.id === item.id);
 
-  const handleIncrement = () => {
-    if (quantity === 0) {
+  const handleAdd = () => {
+    if (!isAdded) {
       addItem(item);
-    } else {
-      updateQuantity(item.id, quantity + 1);
-    }
-  };
-
-  const handleDecrement = () => {
-    if (quantity > 0) {
-      updateQuantity(item.id, quantity - 1);
     }
   };
 
@@ -42,11 +33,23 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item }) => {
       {/* Content */}
       <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <h3 className="font-medium text-slate-800 flex-1 line-clamp-2">{item.name}</h3>
-        <QuantityControl 
-          quantity={quantity} 
-          onIncrement={handleIncrement} 
-          onDecrement={handleDecrement} 
-        />
+        <button
+          onClick={handleAdd}
+          disabled={isAdded}
+          className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+            isAdded
+              ? 'bg-green-50 text-green-700 border-green-200 cursor-default'
+              : 'bg-white text-slate-700 border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          {isAdded ? (
+            <>
+              <Check size={16} /> Added
+            </>
+          ) : (
+            'Add'
+          )}
+        </button>
       </div>
     </div>
   );

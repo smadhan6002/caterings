@@ -165,8 +165,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order: initialOrder, onClose,
             <div className="space-y-2">
               {order.items.map((item, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-800">{item.dishName}</span>
-                  <span className="font-semibold text-slate-700 ml-2">× {item.quantity}</span>
+                  <span className="text-slate-800">• {item.dishName}</span>
                 </div>
               ))}
             </div>

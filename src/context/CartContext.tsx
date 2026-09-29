@@ -1,16 +1,13 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { MenuItem } from '../data/menu';
 
-export interface CartItem extends MenuItem {
-  quantity: number;
-}
+export type CartItem = MenuItem;
 
 interface CartContextType {
   cartItems: CartItem[];
   guestCount: number | null;
   setGuestCount: (count: number | null) => void;
-  addItem: (item: MenuItem, quantity?: number) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addItem: (item: MenuItem) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
   totalItems: number;
@@ -25,41 +22,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [guestCount, setGuestCountState] = useState<number | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
 
-  // When guest count changes, scale all existing items
   const setGuestCount = useCallback((count: number | null) => {
     setGuestCountState(count);
-    if (count !== null) {
-      setCartItems((prev) => prev.map((item) => ({ ...item, quantity: count })));
-    }
   }, []);
 
-  const addItem = useCallback((item: MenuItem, explicitQuantity?: number) => {
+  const addItem = useCallback((item: MenuItem) => {
     setCartItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
-      
-      // Determine what quantity to add
-      let addedQuantity = explicitQuantity;
-      if (addedQuantity === undefined) {
-        addedQuantity = guestCount !== null ? guestCount : 1;
-      }
-
       if (existing) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + addedQuantity! } : i
-        );
+        return prev;
       }
-      return [...prev, { ...item, quantity: addedQuantity! }];
+      return [...prev, item];
     });
-  }, [guestCount]);
-
-  const updateQuantity = useCallback((id: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(id);
-      return;
-    }
-    setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
-    );
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -70,7 +44,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCartItems([]);
   }, []);
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cartItems.length;
 
   return (
     <CartContext.Provider
@@ -79,7 +53,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         guestCount,
         setGuestCount,
         addItem,
-        updateQuantity,
         removeItem,
         clearCart,
         totalItems,

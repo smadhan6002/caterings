@@ -18,7 +18,6 @@ export interface OrderItem {
   dishId: string;
   dishName: string;     // Snapshot — never changes even if dish is renamed/deleted
   categoryId: string;
-  quantity: number;
 }
 
 export interface Order {

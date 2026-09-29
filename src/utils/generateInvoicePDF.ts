@@ -125,12 +125,11 @@ export function generateInvoicePDF(order: Order, invoice: Invoice): void {
     String(i + 1),
     item.dishName,
     item.categoryId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-    String(item.quantity),
   ]);
 
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Dish Name', 'Category', 'Qty']],
+    head: [['#', 'Dish Name', 'Category']],
     body: tableBody,
     theme: 'striped',
     headStyles: {
@@ -145,7 +144,6 @@ export function generateInvoicePDF(order: Order, invoice: Invoice): void {
       0: { cellWidth: 12, halign: 'center' },
       1: { cellWidth: 'auto' },
       2: { cellWidth: 55 },
-      3: { cellWidth: 18, halign: 'center' },
     },
     margin: { left: 14, right: 14 },
   });

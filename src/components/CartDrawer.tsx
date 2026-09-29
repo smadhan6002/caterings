@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { GuestCountSelector } from './GuestCountSelector';
-import { QuantityControl } from './QuantityControl';
 import { InquiryFormModal } from './InquiryFormModal';
 
 export const CartDrawer: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const { 
     cartItems, 
     isCartDrawerOpen, 
     setIsCartDrawerOpen, 
-    updateQuantity, 
-    removeItem
+    removeItem,
+    guestCount
   } = useCart();
 
   if (!isCartDrawerOpen) return null;
@@ -27,6 +27,15 @@ export const CartDrawer: React.FC = () => {
   }, {} as Record<string, typeof cartItems>);
 
   const handleSendInquiry = () => {
+    if (cartItems.length === 0) {
+      setErrorMsg('Please add at least one dish to your catering order.');
+      return;
+    }
+    if (guestCount === null || guestCount <= 0) {
+      setErrorMsg('Please select the number of people.');
+      return;
+    }
+    setErrorMsg('');
     setIsModalOpen(true);
   };
 
@@ -59,61 +68,64 @@ export const CartDrawer: React.FC = () => {
           
           {/* Guest Count */}
           <section>
-            <h3 className="text-sm font-medium text-slate-800 mb-3">Guest count</h3>
+            <h3 className="text-sm font-medium text-slate-800 mb-3">Number of People</h3>
             <GuestCountSelector />
           </section>
           
           {/* Items */}
-          {Object.entries(groupedItems).map(([categoryId, items]) => (
-            <section key={categoryId}>
-              <h4 className="text-xs font-bold text-primary tracking-wider uppercase mb-3">
-                {categoryId}
-              </h4>
-              <div className="space-y-4">
-                {items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
-                    <span className="text-slate-800 text-sm font-medium flex-1">{item.name}</span>
-                    <div className="flex items-center gap-3">
-                      <QuantityControl 
-                        quantity={item.quantity}
-                        onIncrement={() => updateQuantity(item.id, item.quantity + 1)}
-                        onDecrement={() => updateQuantity(item.id, item.quantity - 1)}
-                      />
-                      <button 
-                        onClick={() => removeItem(item.id)}
-                        className="text-red-500 hover:text-red-600 p-2 -mr-2"
-                        aria-label={`Remove ${item.name}`}
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </div>
+          {Object.keys(groupedItems).length > 0 && (
+            <section>
+              <h3 className="text-sm font-medium text-slate-800 mb-3">Selected Dishes</h3>
+              {Object.entries(groupedItems).map(([categoryId, items]) => (
+                <div key={categoryId} className="mb-4">
+                  <h4 className="text-xs font-bold text-primary tracking-wider uppercase mb-2">
+                    {categoryId}
+                  </h4>
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
+                        <div className="flex items-center gap-3 flex-1">
+                          <Check size={16} className="text-green-500" />
+                          <span className="text-slate-800 text-sm font-medium">{item.name}</span>
+                        </div>
+                        <button 
+                          onClick={() => removeItem(item.id)}
+                          className="text-red-500 hover:text-red-600 text-sm font-medium px-2 py-1 rounded hover:bg-red-50"
+                          aria-label={`Remove ${item.name}`}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </section>
-          ))}
+          )}
           
           {cartItems.length === 0 && (
             <div className="text-center py-8 text-slate-500">
-              Your cart is empty. Add some delicious dishes!
+              Please add at least one dish.
             </div>
           )}
         </div>
 
         {/* Footer */}
-        {cartItems.length > 0 && (
-          <div className="p-6 border-t border-gray-100 bg-white">
-            <button
-              onClick={handleSendInquiry}
-              className="w-full bg-[#ea580c] hover:bg-[#d94f0b] text-white py-3.5 rounded-md font-medium transition-colors"
-            >
-              Send Catering Inquiry
-            </button>
-          </div>
-        )}
+        <div className="p-6 border-t border-gray-100 bg-white">
+          {errorMsg && (
+            <p className="text-red-500 text-sm mb-3 text-center">{errorMsg}</p>
+          )}
+          <button
+            onClick={handleSendInquiry}
+            className="w-full bg-[#ea580c] hover:bg-[#d94f0b] text-white py-3.5 rounded-md font-medium transition-colors"
+          >
+            Send Catering Inquiry
+          </button>
+        </div>
       </div>
     </div>
     <InquiryFormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 };
+

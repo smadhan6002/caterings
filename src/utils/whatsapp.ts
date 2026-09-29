@@ -44,7 +44,7 @@ export const generateWhatsAppLink = (
   for (const [category, items] of Object.entries(groupedItems)) {
     message += `\n_${category.toUpperCase()}_\n`;
     items.forEach((item) => {
-      message += `- ${item.name} (${item.quantity})\n`;
+      message += `- ${item.name}\n`;
     });
   }
   

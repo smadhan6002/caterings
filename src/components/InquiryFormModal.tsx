@@ -57,7 +57,6 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
       dishId: item.id,
       dishName: item.name,   // snapshot — safe even if dish is later renamed/deleted
       categoryId: item.categoryId,
-      quantity: item.quantity,
     }));
 
     const order = orderService.create({
