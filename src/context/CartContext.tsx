@@ -13,6 +13,8 @@ interface CartContextType {
   totalItems: number;
   isCartDrawerOpen: boolean;
   setIsCartDrawerOpen: (isOpen: boolean) => void;
+  isRiceSuggestionOpen: boolean;
+  setIsRiceSuggestionOpen: (isOpen: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [guestCount, setGuestCountState] = useState<number | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [isRiceSuggestionOpen, setIsRiceSuggestionOpen] = useState(false);
 
   const setGuestCount = useCallback((count: number | null) => {
     setGuestCountState(count);
@@ -32,6 +35,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev;
       }
+
+      // Trigger recommendation ONLY for the dish "Rice"
+      const isRice = item.id === 'ms2' || item.name.trim().toLowerCase() === 'rice';
+      if (isRice) {
+        setIsRiceSuggestionOpen(true);
+      }
+
       return [...prev, item];
     });
   }, []);
@@ -58,6 +68,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         totalItems,
         isCartDrawerOpen,
         setIsCartDrawerOpen,
+        isRiceSuggestionOpen,
+        setIsRiceSuggestionOpen,
       }}
     >
       {children}

@@ -8,18 +8,12 @@ import type { Order } from '../types/admin';
 import type { Invoice } from '../types/admin';
 import { siteConfig } from '../config/site';
 
+import { normalizeOrderPayments, getOrderTotalPaid, getOrderBalanceDue, getOrderPaymentStatus } from '../services/orderService';
+
 function formatDate(isoDate: string): string {
   if (!isoDate) return '';
   const d = new Date(isoDate.includes('T') ? isoDate : isoDate + 'T00:00:00');
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-function paymentStatus(order: Order): string {
-  const remaining = order.totalAmount - order.advanceAmount - order.balancePaid;
-  if (remaining <= 0) return 'FULLY PAID';
-  if (order.advanceAmount > 0 && order.balancePaid > 0) return 'PARTIALLY PAID';
-  if (order.advanceAmount > 0) return 'ADVANCE PAID';
-  return 'UNPAID';
 }
 
 // jsPDF Helvetica does NOT support the Rs. symbol — use "Rs." text instead
@@ -151,12 +145,30 @@ export function generateInvoicePDF(order: Order, invoice: Invoice): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   y = (doc as any).lastAutoTable.finalY + 10;
 
-  // ─── PAYMENT SUMMARY BOX ──────────────────────────────
-  const boxW = 100;
+  // ─── PAYMENT SUMMARY BOX WITH MULTIPLE INSTALLMENTS ───
+  const payments = normalizeOrderPayments(order);
+  const totalPaid = getOrderTotalPaid(order);
+  const remaining = getOrderBalanceDue(order);
+  const status = getOrderPaymentStatus(order).toUpperCase();
+
+  const boxW = 104;
   const boxX = pageW - 14 - boxW;
-  const remaining = Math.max(0, order.totalAmount - order.advanceAmount - order.balancePaid);
-  const status = paymentStatus(order);
-  const boxH = 68;
+  const rowH = 8.5;
+
+  const payRows: [string, string][] = [
+    ['Total Amount', inr(order.totalAmount)],
+  ];
+
+  payments.forEach((p, idx) => {
+    const dStr = p.date ? new Date(p.date + (p.date.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    const label = `Pay #${idx + 1} (${p.method}${dStr ? ' · ' + dStr : ''})`;
+    payRows.push([label, inr(p.amount)]);
+  });
+
+  payRows.push(['Total Paid', inr(totalPaid)]);
+  payRows.push(['Balance Due', inr(remaining)]);
+
+  const boxH = 20 + payRows.length * rowH + 14;
 
   // Add page if not enough space
   if (y + boxH > pageH - 20) {
@@ -179,39 +191,33 @@ export function generateInvoicePDF(order: Order, invoice: Invoice): void {
   doc.setFont('helvetica', 'bold');
   doc.text('PAYMENT SUMMARY', boxX + boxW / 2, y + 7, { align: 'center' });
 
-  const lx = boxX + 6;
-  const rx = boxX + boxW - 6;
-  let ry = y + 18;
-  const rowH = 9;
-
-  const payRows = [
-    ['Total Amount', inr(order.totalAmount)],
-    ['Advance Paid', inr(order.advanceAmount)],
-    ['Balance Paid', inr(order.balancePaid)],
-    ['Balance Due ', inr(remaining)],
-  ];
+  const lx = boxX + 5;
+  const rx = boxX + boxW - 5;
+  let ry = y + 17;
 
   doc.setTextColor(...darkColor);
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   for (const [label, val] of payRows) {
-    doc.setFont('helvetica', 'normal');
+    const isHighlight = label === 'Total Amount' || label === 'Total Paid' || label === 'Balance Due';
+    doc.setFont('helvetica', isHighlight ? 'bold' : 'normal');
     doc.text(label, lx, ry);
     doc.setFont('helvetica', 'bold');
     doc.text(val, rx, ry, { align: 'right' });
     doc.setDrawColor(...borderGray);
     doc.setLineWidth(0.15);
-    doc.line(lx, ry + 2.5, rx, ry + 2.5);
+    doc.line(lx, ry + 2, rx, ry + 2);
     ry += rowH;
   }
 
   // Status badge
   const badgeColor: [number, number, number] =
-    remaining <= 0 ? [22, 163, 74] : order.advanceAmount > 0 ? [234, 88, 12] : [220, 38, 38];
+    remaining <= 0 && order.totalAmount > 0 ? [22, 163, 74] : totalPaid > 0 ? [234, 88, 12] : [220, 38, 38];
   doc.setFillColor(...badgeColor);
-  doc.roundedRect(lx, ry + 1, boxW - 12, 9, 1.5, 1.5, 'F');
+  doc.roundedRect(lx, ry + 1, boxW - 10, 8.5, 1.5, 1.5, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text(status, lx + (boxW - 12) / 2, ry + 7, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text(status, lx + (boxW - 10) / 2, ry + 6.5, { align: 'center' });
 
   // ─── NOTES (left of payment box) ────────────────────────
   if (order.notes && order.notes.trim()) {

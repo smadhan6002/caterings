@@ -2,7 +2,7 @@
  * orderService — localStorage-based order persistence
  * Swap each method body with Supabase SDK calls to migrate.
  */
-import type { Order, OrderStatus } from '../types/admin';
+import type { Order, OrderPayment, OrderStatus } from '../types/admin';
 
 const ORDERS_KEY = 'annapoorna_orders';
 const ORDER_COUNTER_KEY = 'annapoorna_order_counter';
@@ -22,10 +22,78 @@ function generateOrderId(): string {
   return `ORD-${String(n).padStart(4, '0')}`;
 }
 
+/**
+ * Normalizes an order's payments array.
+ * Converts legacy advanceAmount / balancePaid if payments array is missing.
+ */
+export function normalizeOrderPayments(order: Order): OrderPayment[] {
+  if (Array.isArray(order.payments) && order.payments.length > 0) {
+    return order.payments;
+  }
+
+  // Safe migration layer for legacy data
+  const migrated: OrderPayment[] = [];
+  const adv = Number(order.advanceAmount) || 0;
+  const bal = Number(order.balancePaid) || 0;
+  const baseDate = order.orderDate || (order.createdAt ? order.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]);
+
+  if (adv > 0) {
+    migrated.push({
+      id: `${order.id}-pay-1`,
+      amount: adv,
+      date: baseDate,
+      method: 'Cash',
+      note: 'Existing advance payment',
+    });
+  }
+
+  if (bal > 0) {
+    migrated.push({
+      id: `${order.id}-pay-2`,
+      amount: bal,
+      date: baseDate,
+      method: 'Cash',
+      note: 'Existing balance payment',
+    });
+  }
+
+  return migrated;
+}
+
+export function getOrderTotalPaid(order: Order): number {
+  const payments = normalizeOrderPayments(order);
+  return payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+}
+
+export function getOrderBalanceDue(order: Order): number {
+  const total = Number(order.totalAmount) || 0;
+  const totalPaid = getOrderTotalPaid(order);
+  return Math.max(0, total - totalPaid);
+}
+
+export function getOrderPaymentStatus(order: Order): 'Unpaid' | 'Partially Paid' | 'Paid' {
+  const total = Number(order.totalAmount) || 0;
+  const totalPaid = getOrderTotalPaid(order);
+
+  if (totalPaid <= 0) return 'Unpaid';
+  if (totalPaid >= total && total > 0) return 'Paid';
+  return 'Partially Paid';
+}
+
 export const orderService = {
   getAll(): Order[] {
     try {
-      return JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]') as Order[];
+      const raw = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]') as Order[];
+      return raw.map((order) => {
+        const payments = normalizeOrderPayments(order);
+        const totalPaid = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+        return {
+          ...order,
+          payments,
+          advanceAmount: payments[0]?.amount ?? 0,
+          balancePaid: payments.slice(1).reduce((s, p) => s + (Number(p.amount) || 0), 0) || (totalPaid > (payments[0]?.amount ?? 0) ? totalPaid - (payments[0]?.amount ?? 0) : 0),
+        };
+      });
     } catch {
       return [];
     }
@@ -37,11 +105,17 @@ export const orderService = {
 
   create(data: Omit<Order, 'id' | 'createdAt' | 'invoiceGenerated'>): Order {
     const orders = this.getAll();
+    const payments = data.payments ? [...data.payments] : [];
+    const totalPaid = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
     const order: Order = {
       ...data,
       id: generateOrderId(),
       createdAt: new Date().toISOString(),
       invoiceGenerated: false,
+      payments,
+      advanceAmount: payments[0]?.amount ?? data.advanceAmount ?? 0,
+      balancePaid: data.balancePaid ?? (totalPaid > (payments[0]?.amount ?? 0) ? totalPaid - (payments[0]?.amount ?? 0) : 0),
     };
     orders.push(order);
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
@@ -52,7 +126,20 @@ export const orderService = {
     const orders = this.getAll();
     const idx = orders.findIndex((o) => o.id === id);
     if (idx === -1) return undefined;
-    orders[idx] = { ...orders[idx], ...changes };
+
+    let updatedPayments = changes.payments ?? orders[idx].payments ?? [];
+    if (!changes.payments && (changes.advanceAmount !== undefined || changes.balancePaid !== undefined)) {
+      // If legacy update was called
+      updatedPayments = normalizeOrderPayments({ ...orders[idx], ...changes });
+    }
+
+    orders[idx] = {
+      ...orders[idx],
+      ...changes,
+      payments: updatedPayments,
+      advanceAmount: updatedPayments[0]?.amount ?? 0,
+      balancePaid: updatedPayments.slice(1).reduce((s, p) => s + (Number(p.amount) || 0), 0),
+    };
     localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
     return orders[idx];
   },
@@ -68,6 +155,54 @@ export const orderService = {
     balancePaid: number
   ): Order | undefined {
     return this.update(id, { totalAmount, advanceAmount, balancePaid });
+  },
+
+  addPayment(
+    orderId: string,
+    payment: Omit<OrderPayment, 'id'>
+  ): Order | undefined {
+    const order = this.getById(orderId);
+    if (!order) return undefined;
+    const currentPayments = normalizeOrderPayments(order);
+    const newPayment: OrderPayment = {
+      ...payment,
+      id: `pay-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      amount: Number(payment.amount) || 0,
+    };
+    const updatedPayments = [...currentPayments, newPayment];
+    return this.update(orderId, { payments: updatedPayments });
+  },
+
+  updatePaymentEntry(
+    orderId: string,
+    paymentId: string,
+    changes: Partial<OrderPayment>
+  ): Order | undefined {
+    const order = this.getById(orderId);
+    if (!order) return undefined;
+    const currentPayments = normalizeOrderPayments(order);
+    const updatedPayments = currentPayments.map((p) => {
+      if (p.id === paymentId) {
+        return {
+          ...p,
+          ...changes,
+          amount: changes.amount !== undefined ? Number(changes.amount) : p.amount,
+        };
+      }
+      return p;
+    });
+    return this.update(orderId, { payments: updatedPayments });
+  },
+
+  deletePaymentEntry(
+    orderId: string,
+    paymentId: string
+  ): Order | undefined {
+    const order = this.getById(orderId);
+    if (!order) return undefined;
+    const currentPayments = normalizeOrderPayments(order);
+    const updatedPayments = currentPayments.filter((p) => p.id !== paymentId);
+    return this.update(orderId, { payments: updatedPayments });
   },
 
   markInvoiceGenerated(id: string): Order | undefined {

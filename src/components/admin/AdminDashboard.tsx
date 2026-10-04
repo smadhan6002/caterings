@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ShoppingBag, Clock, CheckCircle, TrendingUp, IndianRupee, AlertCircle } from 'lucide-react';
-import { orderService } from '../../services/orderService';
+import { orderService, getOrderTotalPaid, getOrderBalanceDue } from '../../services/orderService';
 import type { Order } from '../../types/admin';
 
 interface StatCardProps {
@@ -35,11 +35,8 @@ export const AdminDashboard: React.FC = () => {
   const confirmed = orders.filter((o) => o.status === 'Confirmed' || o.status === 'In Preparation' || o.status === 'Ready').length;
   const completed = orders.filter((o) => o.status === 'Completed').length;
   const cancelled = orders.filter((o) => o.status === 'Cancelled').length;
-  const totalAdvance = orders.reduce((s, o) => s + o.advanceAmount, 0);
-  const totalBalancePending = orders.reduce(
-    (s, o) => s + Math.max(0, o.totalAmount - o.advanceAmount - o.balancePaid),
-    0
-  );
+  const totalCollected = orders.reduce((s, o) => s + getOrderTotalPaid(o), 0);
+  const totalBalancePending = orders.reduce((s, o) => s + getOrderBalanceDue(o), 0);
 
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -67,7 +64,7 @@ export const AdminDashboard: React.FC = () => {
         <StatCard label="Pending" value={pending} icon={<Clock size={22} />} color="text-yellow-600" bgColor="bg-yellow-100" />
         <StatCard label="Active" value={confirmed} icon={<TrendingUp size={22} />} color="text-blue-600" bgColor="bg-blue-100" />
         <StatCard label="Completed" value={completed} icon={<CheckCircle size={22} />} color="text-green-600" bgColor="bg-green-100" />
-        <StatCard label="Advance Collected" value={`₹${totalAdvance.toLocaleString('en-IN')}`} icon={<IndianRupee size={22} />} color="text-primary" bgColor="bg-orange-100" />
+        <StatCard label="Payments Collected" value={`₹${totalCollected.toLocaleString('en-IN')}`} icon={<IndianRupee size={22} />} color="text-primary" bgColor="bg-orange-100" />
         <StatCard label="Balance Pending" value={`₹${totalBalancePending.toLocaleString('en-IN')}`} icon={<AlertCircle size={22} />} color="text-red-600" bgColor="bg-red-100" />
       </div>
 

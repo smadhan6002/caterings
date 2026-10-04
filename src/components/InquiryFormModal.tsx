@@ -70,6 +70,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
       totalAmount: 0,
       advanceAmount: 0,
       balancePaid: 0,
+      payments: [],
       status: 'Pending',
       notes: '',
     });

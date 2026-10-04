@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { categories } from './data/menu';
 import { CartProvider } from './context/CartContext';
 import { Hero } from './components/Hero';
@@ -7,6 +8,7 @@ import { CategoryNav } from './components/CategoryNav';
 import { MenuSection } from './components/MenuSection';
 import { CartActionBar } from './components/CartActionBar';
 import { CartDrawer } from './components/CartDrawer';
+import { RiceSuggestionModal } from './components/RiceSuggestionModal';
 import { AdminPage } from './components/admin/AdminPage';
 
 function AdminLoginButton() {
@@ -14,13 +16,11 @@ function AdminLoginButton() {
   return (
     <button
       onClick={() => navigate('/admin')}
-      className="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow transition-colors flex items-center gap-1.5"
+      className="fixed top-3 right-3 sm:top-4 sm:right-6 z-50 bg-slate-900/90 hover:bg-slate-800 text-white text-xs sm:text-sm font-medium px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 flex items-center gap-1.5 cursor-pointer backdrop-blur-sm border border-slate-700/50"
       aria-label="Admin login"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-      </svg>
-      Admin
+      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
+      <span>Admin</span>
     </button>
   );
 }
@@ -62,6 +62,7 @@ function MainApp() {
 
       <CartActionBar />
       <CartDrawer />
+      <RiceSuggestionModal />
     </div>
   );
 }

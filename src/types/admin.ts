@@ -12,7 +12,23 @@ export type OrderStatus =
   | 'Completed'
   | 'Cancelled';
 
-export type PaymentStatus = 'Unpaid' | 'Advance Paid' | 'Partially Paid' | 'Fully Paid';
+export type PaymentMethod =
+  | 'Cash'
+  | 'UPI'
+  | 'Bank Transfer'
+  | 'Card'
+  | 'Cheque'
+  | 'Other';
+
+export interface OrderPayment {
+  id: string;           // e.g. pay-001 or unique ID
+  amount: number;
+  date: string;         // ISO date yyyy-mm-dd
+  method: PaymentMethod | string;
+  note?: string;
+}
+
+export type PaymentStatus = 'Unpaid' | 'Partially Paid' | 'Paid' | 'Advance Paid' | 'Fully Paid';
 
 export interface OrderItem {
   dishId: string;
@@ -31,8 +47,9 @@ export interface Order {
   items: OrderItem[];
   guestCount: number | null;
   totalAmount: number;
-  advanceAmount: number;
-  balancePaid: number;
+  advanceAmount?: number;   // Maintained for backward compatibility
+  balancePaid?: number;     // Maintained for backward compatibility
+  payments?: OrderPayment[]; // Multiple split payments / installment history
   status: OrderStatus;
   notes: string;
   invoiceGenerated: boolean;
