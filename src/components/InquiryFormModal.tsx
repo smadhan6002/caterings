@@ -18,7 +18,8 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
     phone: '',
     eventAddress: '',
     eventType: '',
-    eventDate: ''
+    eventDate: '',
+    notes: ''
   });
 
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -72,14 +73,14 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
       balancePaid: 0,
       payments: [],
       status: 'Pending',
-      notes: '',
+      notes: formData.notes.trim(),
     });
 
     setOrderId(order.id);
     setSubmitted(true);
 
     // Also send via WhatsApp (existing behaviour preserved)
-    const url = generateWhatsAppLink(cartItems, guestCount, formData);
+    const url = generateWhatsAppLink(order);
     window.open(url, '_blank');
 
     clearCart();
@@ -95,7 +96,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Order Placed!</h2>
           <p className="text-slate-600 text-sm mb-4">
-            Your inquiry has been sent via WhatsApp. The caterer will confirm shortly.
+            Your order details are ready in WhatsApp. Please press Send to submit your order.
           </p>
           <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-6">
             <p className="text-xs text-orange-700 font-medium">Your Order ID</p>
@@ -193,6 +194,18 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${errors.eventDate ? 'border-red-400' : 'border-gray-300'}`}
             />
             {errors.eventDate && <p className="text-red-500 text-xs mt-1">{errors.eventDate}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-1">Additional Notes (optional)</label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={(e) => handleChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              placeholder="Any special requirements..."
+            />
           </div>
 
           <div className="pt-2">

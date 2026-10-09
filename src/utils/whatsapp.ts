@@ -1,54 +1,52 @@
-import type { CartItem } from '../context/CartContext';
 import { siteConfig } from '../config/site';
+import type { Order } from '../types/admin';
 
-interface InquiryFormData {
-  name: string;
-  phone: string;
-  eventAddress: string;
-  eventType?: string;
-  eventDate?: string;
-}
-
-export const generateWhatsAppLink = (
-  cartItems: CartItem[],
-  guestCount: number | null,
-  formData: InquiryFormData
-): string => {
-  const number = siteConfig.whatsappNumber;
+export const generateWhatsAppLink = (order: Order): string => {
+  let number = siteConfig.whatsappNumber;
   
-  let message = `Hello ${siteConfig.name},\nI would like to make a catering inquiry.\n\n`;
+  // Ensure international format without '+' sign, assuming India (91) if it's 10 digits
+  if (number.startsWith('+')) {
+    number = number.substring(1);
+  } else if (number.length === 10) {
+    number = `91${number}`;
+  }
   
-  message += `*Customer Details:*\n`;
-  message += `- Name: ${formData.name}\n`;
-  message += `- Phone: ${formData.phone}\n`;
-  message += `- Address: ${formData.eventAddress}\n`;
-  if (formData.eventType) message += `- Event Type: ${formData.eventType}\n`;
-  if (formData.eventDate) message += `- Date: ${formData.eventDate}\n`;
+  let message = `NEW CATERING ORDER\n\n`;
+  message += `Order ID: ${order.id}\n\n`;
+  
+  message += `CUSTOMER DETAILS\n`;
+  message += `Customer Name: ${order.customerName}\n`;
+  message += `Mobile Number: ${order.mobile}\n`;
+  message += `Delivery Date: ${order.orderDate}\n\n`;
+  
+  message += `CATERING DETAILS\n`;
+  message += `Number of People: ${order.guestCount !== null ? order.guestCount : 'Not provided'}\n\n`;
+  
+  message += `SELECTED DISHES\n`;
+  order.items.forEach((item, index) => {
+    message += `${index + 1}. ${item.dishName}\n`;
+  });
   message += `\n`;
 
-  if (guestCount !== null) {
-    message += `*Guest Count:* ${guestCount}\n\n`;
-  }
+  message += `ADDITIONAL REQUIREMENTS\n`;
+  message += `${order.notes || 'None'}\n\n`;
 
-  message += `*Selected Dishes:*\n`;
+  const advancePaid = order.advanceAmount || 0;
+  const totalPaid = (order.payments || []).reduce((sum, p) => sum + p.amount, 0) + advancePaid + (order.balancePaid || 0);
+  const balanceDue = order.totalAmount > 0 ? order.totalAmount - totalPaid : 0;
   
-  // Group by category for better readability
-  const groupedItems = cartItems.reduce((acc, item) => {
-    if (!acc[item.categoryId]) {
-      acc[item.categoryId] = [];
-    }
-    acc[item.categoryId].push(item);
-    return acc;
-  }, {} as Record<string, CartItem[]>);
+  let paymentStatus = 'Unpaid';
+  if (totalPaid > 0 && totalPaid < order.totalAmount) paymentStatus = 'Partially Paid';
+  else if (totalPaid > 0 && totalPaid >= order.totalAmount) paymentStatus = 'Fully Paid';
 
-  for (const [category, items] of Object.entries(groupedItems)) {
-    message += `\n_${category.toUpperCase()}_\n`;
-    items.forEach((item) => {
-      message += `- ${item.name}\n`;
-    });
-  }
-  
-  message += `\nPlease let me know the total cost and availability.`;
+  message += `PAYMENT DETAILS\n`;
+  message += `Total Amount: ${order.totalAmount > 0 ? `₹${order.totalAmount}` : 'Not provided'}\n`;
+  message += `Advance Paid: ${advancePaid > 0 ? `₹${advancePaid}` : 'Not provided'}\n`;
+  message += `Total Paid: ${totalPaid > 0 ? `₹${totalPaid}` : 'Not provided'}\n`;
+  message += `Balance Due: ${order.totalAmount > 0 ? `₹${balanceDue}` : 'Not provided'}\n`;
+  message += `Payment Status: ${order.totalAmount > 0 ? paymentStatus : 'Not provided'}\n\n`;
+
+  message += `Please confirm this catering order.\n\nThank you!`;
   
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${number}?text=${encodedMessage}`;
