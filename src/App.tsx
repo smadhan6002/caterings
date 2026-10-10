@@ -11,6 +11,7 @@ import { CartActionBar } from './components/CartActionBar';
 import { CartDrawer } from './components/CartDrawer';
 import { RiceSuggestionModal } from './components/RiceSuggestionModal';
 import { AdminPage } from './components/admin/AdminPage';
+import { Footer } from './components/Footer';
 import logoImg from './assets/LOGO.png';
 
 function LanguageSwitcher() {
@@ -145,6 +146,8 @@ function MainApp() {
           <MenuSection key={category.id} category={category} />
         ))}
       </main>
+
+      <Footer />
 
       <CartActionBar />
       <CartDrawer />

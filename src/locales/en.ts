@@ -173,6 +173,21 @@ export const en = {
   waNone: 'None',
   waFooter: 'Please contact the customer to confirm the catering requirements.\n\nThank you.\nKanchi Ambal Catering',
   waKgUnit: 'kg',
+
+  // Footer
+  servicesOffered: 'Services Offered',
+  servicesList: [
+    'Weddings',
+    'Corporate Events',
+    'Birthday Parties',
+    'Temple and Traditional Festivals',
+    'Private Banquets and Catering'
+  ],
+  locationAndContact: 'Location & Contact',
+  addressLabel: 'Address:',
+  addressLine1: 'No. 25, Mandapam Street,',
+  addressLine2: 'Kanchipuram, Tamil Nadu – 631501, India.',
+  phoneNumbersLabel: 'Phone Numbers:',
 };
 
 export type Translations = typeof en;
