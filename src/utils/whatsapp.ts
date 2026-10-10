@@ -1,7 +1,8 @@
 import { siteConfig } from '../config/site';
 import type { Order } from '../types/admin';
+import type { Translations } from '../locales/en';
 
-export const generateWhatsAppLink = (order: Order): string => {
+export const generateWhatsAppLink = (order: Order, t: Translations): string => {
   let number = siteConfig.whatsappNumber;
   
   // Ensure international format without '+' sign, assuming India (91) if it's 10 digits
@@ -11,28 +12,41 @@ export const generateWhatsAppLink = (order: Order): string => {
     number = `91${number}`;
   }
   
-  let message = `KANCHI AMBAL CATERING\nNEW CATERING ORDER\n\n`;
-  message += `Order ID: ${order.id}\n\n`;
+  let message = t.waHeader;
+  message += `${t.waOrderId}: ${order.id}\n\n`;
   
-  message += `CUSTOMER DETAILS\n`;
-  message += `Customer Name: ${order.customerName}\n`;
-  message += `Mobile Number: ${order.mobile}\n`;
-  message += `Delivery Date: ${order.orderDate}\n\n`;
+  message += `${t.waCustomerDetails}\n`;
+  message += `${t.waCustomerName}: ${order.customerName}\n`;
+  message += `${t.waMobile}: ${order.mobile}\n`;
+  message += `${t.waDeliveryDate}: ${order.orderDate}\n\n`;
   
-  message += `CATERING DETAILS\n`;
-  message += `Number of People: ${order.guestCount !== null ? order.guestCount : 'Not provided'}\n\n`;
+  message += `${t.waCateringDetails}\n`;
+  message += `${t.waNumberOfPeople}: ${order.guestCount !== null && order.guestCount !== undefined && order.guestCount > 0 ? `${order.guestCount}` : t.waNotProvided}\n\n`;
   
-  message += `SELECTED DISHES\n`;
+  message += `${t.waSelectedDishes}\n`;
   order.items.forEach((item, index) => {
     message += `${index + 1}. ${item.dishName}\n`;
   });
   message += `\n`;
 
-  message += `ADDITIONAL REQUIREMENTS\n`;
-  message += `${order.notes || 'None'}\n\n`;
+  // Additional food quantities (kg)
+  message += `${t.waAdditionalQuantities}\n`;
+  const quantities = order.foodQuantities ?? [];
+  if (quantities.length > 0) {
+    quantities.forEach((fq, index) => {
+      message += `${index + 1}. ${fq.dishName} — ${fq.quantity} ${t.waKgUnit}\n`;
+    });
+  } else {
+    message += `${t.waNoneKg}\n`;
+  }
+  message += `\n`;
 
-  message += `Please confirm this catering order.\n\nThank you!\nKanchi Ambal Catering`;
+  message += `${t.waAdditionalReq}\n`;
+  message += `${order.notes || t.waNone}\n\n`;
+
+  message += t.waFooter;
   
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${number}?text=${encodedMessage}`;
 };
+

@@ -1,9 +1,11 @@
 import React from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export const CartActionBar: React.FC = () => {
   const { totalItems, setIsCartDrawerOpen } = useCart();
+  const { t } = useLanguage();
 
   if (totalItems === 0) return null;
 
@@ -15,9 +17,10 @@ export const CartActionBar: React.FC = () => {
           className="w-full max-w-md bg-[#ea580c] hover:bg-[#d94f0b] text-white py-3.5 px-6 rounded-lg font-medium flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-95"
         >
           <ShoppingCart size={20} />
-          View Cart ({totalItems})
+          {t.viewCart} ({totalItems})
         </button>
       </div>
     </div>
   );
 };
+

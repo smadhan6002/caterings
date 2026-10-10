@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import { generateWhatsAppLink } from '../utils/whatsapp';
 import { orderService } from '../services/orderService';
 import type { OrderItem } from '../types/admin';
@@ -11,7 +12,8 @@ interface InquiryFormModalProps {
 }
 
 export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onClose }) => {
-  const { cartItems, guestCount, clearCart } = useCart();
+  const { cartItems, guestCount, foodQuantities, clearCart } = useCart();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -40,11 +42,11 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!formData.name.trim()) errs.name = 'Name is required.';
-    if (!formData.phone.trim()) errs.phone = 'Phone number is required.';
-    else if (!/^[6-9]\d{9}$/.test(formData.phone.replace(/\s/g, ''))) errs.phone = 'Enter a valid 10-digit mobile number.';
-    if (!formData.eventAddress.trim()) errs.eventAddress = 'Event address is required.';
-    if (!formData.eventDate) errs.eventDate = 'Event date is required.';
+    if (!formData.name.trim()) errs.name = t.nameRequired;
+    if (!formData.phone.trim()) errs.phone = t.phoneRequired;
+    else if (!/^[6-9]\d{9}$/.test(formData.phone.replace(/\s/g, ''))) errs.phone = t.phoneInvalid;
+    if (!formData.eventAddress.trim()) errs.eventAddress = t.addressRequired;
+    if (!formData.eventDate) errs.eventDate = t.dateRequired;
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -68,6 +70,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
       orderDate: formData.eventDate,
       items: orderItems,
       guestCount,
+      foodQuantities, // Include food quantities in the order
       totalAmount: 0,
       advanceAmount: 0,
       balancePaid: 0,
@@ -79,8 +82,8 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
     setOrderId(order.id);
     setSubmitted(true);
 
-    // Also send via WhatsApp (existing behaviour preserved)
-    const url = generateWhatsAppLink(order);
+    // Also send via WhatsApp
+    const url = generateWhatsAppLink(order, t);
     window.open(url, '_blank');
 
     clearCart();
@@ -94,19 +97,19 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
           <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check size={28} className="text-green-600" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Order Placed!</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">{t.orderPlaced}</h2>
           <p className="text-slate-600 text-sm mb-4">
-            Your order details are ready in WhatsApp. Please press Send to submit your order.
+            {t.orderSuccess}
           </p>
           <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-6">
-            <p className="text-xs text-orange-700 font-medium">Your Order ID</p>
+            <p className="text-xs text-orange-700 font-medium">{t.yourOrderId}</p>
             <p className="text-xl font-bold text-primary mt-0.5">{orderId}</p>
           </div>
           <button
             onClick={onClose}
             className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium text-sm transition-colors"
           >
-            Done
+            {t.done}
           </button>
         </div>
       </div>
@@ -124,7 +127,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
       {/* Modal */}
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-5 sm:p-6 overflow-y-auto max-h-[90vh] mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-slate-900">Your Details</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t.yourDetails}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-2 -mr-2"
@@ -136,7 +139,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-slate-900 mb-1">{t.name} *</label>
             <input
               type="text"
               name="name"
@@ -148,20 +151,20 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">Phone *</label>
+            <label className="block text-sm font-medium text-slate-900 mb-1">{t.phone} *</label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${errors.phone ? 'border-red-400' : 'border-gray-300'}`}
-              placeholder="10-digit mobile number"
+              placeholder={t.phonePlaceholder}
             />
             {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">Event Address *</label>
+            <label className="block text-sm font-medium text-slate-900 mb-1">{t.eventAddress} *</label>
             <input
               type="text"
               name="eventAddress"
@@ -173,7 +176,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">Event Type (optional)</label>
+            <label className="block text-sm font-medium text-slate-900 mb-1">{t.eventType}</label>
             <input
               type="text"
               name="eventType"
@@ -184,7 +187,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">Event Date *</label>
+            <label className="block text-sm font-medium text-slate-900 mb-1">{t.eventDate} *</label>
             <input
               type="date"
               name="eventDate"
@@ -197,14 +200,14 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">Additional Notes (optional)</label>
+            <label className="block text-sm font-medium text-slate-900 mb-1">{t.additionalNotes}</label>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={(e) => handleChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-              placeholder="Any special requirements..."
+              placeholder={t.notePlaceholder}
             />
           </div>
 
@@ -213,7 +216,7 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
               type="submit"
               className="w-full bg-[#E5A985] hover:bg-[#d49975] text-white py-3 rounded-lg font-medium transition-colors mt-2"
             >
-              Send on WhatsApp & Place Order
+              {t.sendWhatsApp}
             </button>
           </div>
         </form>
@@ -221,3 +224,4 @@ export const InquiryFormModal: React.FC<InquiryFormModalProps> = ({ isOpen, onCl
     </div>
   );
 };
+

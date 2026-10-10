@@ -1,10 +1,12 @@
 import React from 'react';
 import { X, Check, Plus, Sparkles } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import { categories, type MenuItem } from '../data/menu';
 
 export const RiceSuggestionModal: React.FC = () => {
   const { isRiceSuggestionOpen, setIsRiceSuggestionOpen, cartItems, addItem } = useCart();
+  const { t, dishName } = useLanguage();
 
   if (!isRiceSuggestionOpen) return null;
 
@@ -25,48 +27,48 @@ export const RiceSuggestionModal: React.FC = () => {
   );
 
   // Represent the 4 specific required dishes using existing data
-  const suggestedList: { key: string; displayName: string; item: MenuItem }[] = [];
+  const suggestedList: { key: string; item: MenuItem; fallbackName: string }[] = [];
 
   if (sambarItem) {
     suggestedList.push({
       key: 'sambar',
-      displayName: 'Sambar',
       item: sambarItem,
+      fallbackName: 'Sambar',
     });
   }
 
   if (vathaKuzhambuItem) {
     suggestedList.push({
       key: 'vatha-kuzhambu',
-      displayName: 'Vatha Kuzhambu',
       item: vathaKuzhambuItem,
+      fallbackName: 'Vatha Kuzhambu',
     });
   }
 
   if (tomatoRasamItem) {
     suggestedList.push({
       key: 'rasam',
-      displayName: 'Rasam',
       item: { ...tomatoRasamItem, name: 'Rasam' },
+      fallbackName: 'Rasam',
     });
   }
 
   if (buttermilkItem) {
     suggestedList.push({
       key: 'buttermilk',
-      displayName: 'Buttermilk',
       item: buttermilkItem,
+      fallbackName: 'Buttermilk',
     });
   }
 
   // Check if each suggested dish is already in the cart
-  const isDishAdded = (displayName: string, item: MenuItem) => {
+  const isDishAdded = (fallbackName: string, item: MenuItem) => {
     return cartItems.some(
       (c) =>
         c.id === item.id ||
-        c.name.toLowerCase() === displayName.toLowerCase() ||
+        c.name.toLowerCase() === fallbackName.toLowerCase() ||
         c.name.toLowerCase() === item.name.toLowerCase() ||
-        (displayName === 'Rasam' && c.name.toLowerCase().includes('rasam'))
+        (fallbackName === 'Rasam' && c.name.toLowerCase().includes('rasam'))
     );
   };
 
@@ -93,7 +95,7 @@ export const RiceSuggestionModal: React.FC = () => {
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
-                <Check size={12} className="stroke-[3]" /> Rice Added
+                <Check size={12} className="stroke-[3]" /> {t.riceAdded}
               </span>
             </div>
             <button
@@ -108,17 +110,19 @@ export const RiceSuggestionModal: React.FC = () => {
           <div className="mb-4">
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-primary" />
-              <h3 className="text-xl font-bold text-slate-900">Suggested with Rice</h3>
+              <h3 className="text-xl font-bold text-slate-900">{t.suggestedWithRice}</h3>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Complete your catering menu with these classic South Indian accompaniments.
+              {t.riceSubtitle}
             </p>
           </div>
 
           {/* Dish List */}
           <div className="space-y-2.5 mb-5">
-            {suggestedList.map(({ key, displayName, item }) => {
-              const added = isDishAdded(displayName, item);
+            {suggestedList.map(({ key, item, fallbackName }) => {
+              const added = isDishAdded(fallbackName, item);
+              const displayName = dishName(item.id, item.name);
+              
               return (
                 <div
                   key={key}
@@ -133,7 +137,7 @@ export const RiceSuggestionModal: React.FC = () => {
                     />
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-800 truncate">{displayName}</p>
-                      <p className="text-[11px] text-slate-500">Traditional side</p>
+                      <p className="text-[11px] text-slate-500">{t.traditionalSide}</p>
                     </div>
                   </div>
 
@@ -148,11 +152,11 @@ export const RiceSuggestionModal: React.FC = () => {
                   >
                     {added ? (
                       <>
-                        <Check size={14} className="stroke-[2.5]" /> Added
+                        <Check size={14} className="stroke-[2.5]" /> {t.added}
                       </>
                     ) : (
                       <>
-                        <Plus size={14} /> Add
+                        <Plus size={14} /> {t.add}
                       </>
                     )}
                   </button>
@@ -167,13 +171,13 @@ export const RiceSuggestionModal: React.FC = () => {
               onClick={handleClose}
               className="w-full bg-[#ea580c] hover:bg-[#d94f0b] text-white py-3 rounded-xl font-semibold text-sm transition-colors shadow-md shadow-orange-500/10 cursor-pointer"
             >
-              Continue
+              {t.continue}
             </button>
             <button
               onClick={handleClose}
               className="w-full text-center text-xs text-slate-500 hover:text-slate-800 py-1 transition-colors cursor-pointer"
             >
-              Skip
+              {t.skip}
             </button>
           </div>
         </div>
@@ -181,3 +185,4 @@ export const RiceSuggestionModal: React.FC = () => {
     </div>
   );
 };
+

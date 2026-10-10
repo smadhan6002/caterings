@@ -1,6 +1,7 @@
 import React from 'react';
 import type { MenuItem } from '../data/menu';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Check } from 'lucide-react';
 
 interface MenuItemCardProps {
@@ -9,6 +10,7 @@ interface MenuItemCardProps {
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item }) => {
   const { cartItems, addItem } = useCart();
+  const { dishName, t } = useLanguage();
   
   const isAdded = cartItems.some((i) => i.id === item.id);
 
@@ -18,13 +20,15 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item }) => {
     }
   };
 
+  const displayName = dishName(item.id, item.name);
+
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-all hover:shadow-md">
       {/* Image */}
       <div className="relative w-full aspect-video">
         <img 
           src={item.image} 
-          alt={item.name} 
+          alt={displayName} 
           className="absolute inset-0 w-full h-full object-cover"
           loading="lazy"
         />
@@ -32,7 +36,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item }) => {
       
       {/* Content */}
       <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-        <h3 className="font-medium text-slate-800 flex-1 line-clamp-2">{item.name}</h3>
+        <h3 className="font-medium text-slate-800 flex-1 line-clamp-2">{displayName}</h3>
         <button
           onClick={handleAdd}
           disabled={isAdded}
@@ -44,13 +48,14 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item }) => {
         >
           {isAdded ? (
             <>
-              <Check size={16} /> Added
+              <Check size={16} /> {t.added}
             </>
           ) : (
-            'Add'
+            t.add
           )}
         </button>
       </div>
     </div>
   );
 };
+

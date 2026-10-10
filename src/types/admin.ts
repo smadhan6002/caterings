@@ -46,6 +46,7 @@ export interface Order {
   createdAt: string;    // ISO datetime
   items: OrderItem[];
   guestCount: number | null;
+  foodQuantities?: { dishId: string; dishName: string; quantity: number; unit: 'kg' }[]; // optional kg quantities
   totalAmount: number;
   advanceAmount?: number;   // Maintained for backward compatibility
   balancePaid?: number;     // Maintained for backward compatibility

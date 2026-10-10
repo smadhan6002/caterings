@@ -298,6 +298,24 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order: initialOrder, onClose,
               </div>
             </div>
 
+            {/* Additional Food Quantities */}
+            {order.foodQuantities && order.foodQuantities.length > 0 && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Additional Food Quantities</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {order.foodQuantities.map((fq, i) => (
+                    <div key={i} className="flex items-center justify-between text-sm text-slate-800 bg-white px-3 py-2 border border-slate-100 rounded-lg shadow-sm">
+                      <div className="flex items-center truncate mr-2">
+                        <span className="text-primary mr-2">•</span>
+                        <span className="font-medium truncate">{fq.dishName}</span>
+                      </div>
+                      <span className="font-bold text-slate-900 flex-shrink-0">{fq.quantity} kg</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* PAYMENT DETAILS - MULTIPLE SPLIT PAYMENTS SYSTEM */}
             <div className="border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
@@ -691,7 +709,14 @@ export const AdminOrders: React.FC = () => {
                         <td className="px-5 py-3 font-medium text-slate-900">{order.customerName}</td>
                         <td className="px-5 py-3 text-slate-600">{order.mobile}</td>
                         <td className="px-5 py-3 text-slate-600">{formatDate(order.orderDate)}</td>
-                        <td className="px-5 py-3 text-slate-600">{order.items.length} dish(es)</td>
+                        <td className="px-5 py-3 text-slate-600">
+                          {order.items.length} dish(es)
+                          {order.foodQuantities && order.foodQuantities.length > 0 && (
+                            <span className="block text-[11px] text-slate-400 mt-0.5">
+                              + {order.foodQuantities.length} kg item(s)
+                            </span>
+                          )}
+                        </td>
                         <td className="px-5 py-3">
                           <p className="font-semibold text-slate-900">
                             ₹{paid.toLocaleString('en-IN')}{' '}
@@ -763,7 +788,14 @@ export const AdminOrders: React.FC = () => {
                       <div className="text-sm text-slate-600 space-y-1.5 pt-2">
                         <p><span className="font-medium">Mobile:</span> {order.mobile}</p>
                         <p><span className="font-medium">Order Date:</span> {formatDate(order.orderDate)}</p>
-                        <p><span className="font-medium">Items:</span> {order.items.length} dish(es)</p>
+                        <p>
+                          <span className="font-medium">Items:</span> {order.items.length} dish(es)
+                          {order.foodQuantities && order.foodQuantities.length > 0 && (
+                            <span className="text-slate-500 text-xs ml-1">
+                              (+ {order.foodQuantities.length} kg)
+                            </span>
+                          )}
+                        </p>
                         <p>
                           <span className="font-medium">Payment:</span>{' '}
                           <strong className="text-slate-900">₹{paid.toLocaleString('en-IN')}</strong> / ₹{order.totalAmount.toLocaleString('en-IN')}

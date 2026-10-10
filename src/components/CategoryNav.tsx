@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Category } from '../data/menu';
 import { cn } from './ui/Button';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CategoryNavProps {
   categories: Category[];
@@ -8,6 +9,8 @@ interface CategoryNavProps {
 }
 
 export const CategoryNav: React.FC<CategoryNavProps> = ({ categories, activeCategory }) => {
+  const { categoryName } = useLanguage();
+
   const scrollToCategory = (id: string) => {
     const element = document.getElementById(`category-${id}`);
     if (element) {
@@ -32,7 +35,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({ categories, activeCate
                   : "bg-white text-slate-700 border-gray-200 hover:bg-gray-50"
               )}
             >
-              {cat.name}
+              {categoryName(cat.id, cat.name)}
             </button>
           ))}
         </div>
@@ -40,3 +43,4 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({ categories, activeCate
     </div>
   );
 };
+

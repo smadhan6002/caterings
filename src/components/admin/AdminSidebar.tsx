@@ -1,6 +1,7 @@
 import React from 'react';
-import { LayoutDashboard, UtensilsCrossed, ClipboardList, LogOut, ChefHat, X, Menu } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ClipboardList, LogOut, X, Menu } from 'lucide-react';
 import { siteConfig } from '../../config/site';
+import logoImg from '../../assets/Catering Logo.jpeg';
 
 export type AdminView = 'dashboard' | 'dishes' | 'orders';
 
@@ -30,8 +31,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
-            <ChefHat size={18} className="text-white" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-200/50 flex items-center justify-center bg-white flex-shrink-0">
+            <img src={logoImg} alt={siteConfig.name} className="w-full h-full object-contain p-0.5" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-900 truncate">{siteConfig.name}</p>

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import { cn } from './ui/Button';
 
 export const GuestCountSelector: React.FC = () => {
   const { guestCount, setGuestCount } = useCart();
+  const { t } = useLanguage();
   const [isCustom, setIsCustom] = useState(false);
   
   const presets = [50, 100, 150, 200];
@@ -50,7 +52,7 @@ export const GuestCountSelector: React.FC = () => {
               : "bg-white text-slate-700 border-gray-200 hover:bg-gray-50"
           )}
         >
-          Custom
+          {t.custom}
         </button>
       </div>
       
@@ -58,7 +60,7 @@ export const GuestCountSelector: React.FC = () => {
         <input
           type="number"
           min="1"
-          placeholder="Enter guest count"
+          placeholder={t.enterGuestCount}
           value={guestCount || ''}
           onChange={handleCustomChange}
           className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-slate-800"
@@ -67,3 +69,4 @@ export const GuestCountSelector: React.FC = () => {
     </div>
   );
 };
+
