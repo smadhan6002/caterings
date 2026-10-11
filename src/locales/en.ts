@@ -13,6 +13,9 @@ export const en = {
   // Cart Action Bar
   viewCart: 'View Cart',
 
+  // Food Image Disclaimer
+  imageDisclaimer: 'Please note: Photos are for visualisation purposes only. Actual items may vary in shape and colour.',
+
   // Cart Drawer
   yourSelection: 'Your Selection',
   numberOfPeople: 'Number of People',

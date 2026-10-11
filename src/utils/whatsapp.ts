@@ -2,6 +2,26 @@ import { siteConfig } from '../config/site';
 import type { Order } from '../types/admin';
 import type { Translations } from '../locales/en';
 
+function getDishDisplayName(name: string | undefined, id: string | undefined, t: Translations): string {
+  const trimmed = name?.trim() || '';
+  if (trimmed && t.dishTranslationsByEnglishName?.[trimmed]) {
+    return t.dishTranslationsByEnglishName[trimmed];
+  }
+  if (trimmed && t.dishTranslationsByEnglishName) {
+    const lower = trimmed.toLowerCase();
+    const match = Object.keys(t.dishTranslationsByEnglishName).find(
+      (k) => k.toLowerCase() === lower
+    );
+    if (match && t.dishTranslationsByEnglishName[match]) {
+      return t.dishTranslationsByEnglishName[match];
+    }
+  }
+  if (id && t.dishes?.[id]) {
+    return t.dishes[id];
+  }
+  return trimmed || (id && t.dishes?.[id]) || '';
+}
+
 export const generateWhatsAppLink = (order: Order, t: Translations): string => {
   let number = siteConfig.whatsappNumber;
   
@@ -25,7 +45,7 @@ export const generateWhatsAppLink = (order: Order, t: Translations): string => {
   
   message += `${t.waSelectedDishes}\n`;
   order.items.forEach((item, index) => {
-    const displayName = (item.dishId && t.dishes[item.dishId]) || t.dishTranslationsByEnglishName?.[item.dishName] || item.dishName;
+    const displayName = getDishDisplayName(item.dishName, item.dishId, t);
     message += `${index + 1}. ${displayName}\n`;
   });
   message += `\n`;
@@ -35,8 +55,8 @@ export const generateWhatsAppLink = (order: Order, t: Translations): string => {
   const quantities = order.foodQuantities ?? [];
   if (quantities.length > 0) {
     quantities.forEach((fq, index) => {
-      const displayName = (fq.dishId && t.dishes[fq.dishId]) || t.dishTranslationsByEnglishName?.[fq.dishName] || fq.dishName;
-      message += `${index + 1}. ${displayName} — ${fq.quantity} ${t.waKgUnit}\n`;
+      const displayName = getDishDisplayName(fq.dishName, fq.dishId, t);
+      message += `${index + 1}. ${displayName} – ${fq.quantity} ${t.waKgUnit}\n`;
     });
   } else {
     message += `${t.waNoneKg}\n`;

@@ -291,7 +291,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order: initialOrder, onClose,
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Selected Dishes ({order.items.length})</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {order.items.map((item, i) => {
-                  const tamilName = (item.dishId && ta.dishes[item.dishId]) || ta.dishTranslationsByEnglishName?.[item.dishName];
+                  const tamilName = ta.dishTranslationsByEnglishName?.[item.dishName] || (item.dishId && ta.dishes[item.dishId]);
                   return (
                     <div key={i} className="flex items-center text-sm text-slate-800">
                       <span className="text-primary mr-2">•</span>
@@ -311,7 +311,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order: initialOrder, onClose,
                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Additional Food Quantities</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {order.foodQuantities.map((fq, i) => {
-                    const tamilName = (fq.dishId && ta.dishes[fq.dishId]) || ta.dishTranslationsByEnglishName?.[fq.dishName];
+                    const tamilName = ta.dishTranslationsByEnglishName?.[fq.dishName] || (fq.dishId && ta.dishes[fq.dishId]);
                     return (
                       <div key={i} className="flex items-center justify-between text-sm text-slate-800 bg-white px-3 py-2 border border-slate-100 rounded-lg shadow-sm">
                         <div className="flex items-center truncate mr-2">

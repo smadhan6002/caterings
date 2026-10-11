@@ -12,6 +12,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { RiceSuggestionModal } from './components/RiceSuggestionModal';
 import { AdminPage } from './components/admin/AdminPage';
 import { Footer } from './components/Footer';
+import { FoodImageDisclaimer } from './components/FoodImageDisclaimer';
 import logoImg from './assets/LOGO.png';
 
 function LanguageSwitcher() {
@@ -142,6 +143,7 @@ function MainApp() {
       <CategoryNav categories={categories} activeCategory={activeCategory} />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <FoodImageDisclaimer />
         {categories.map((category) => (
           <MenuSection key={category.id} category={category} />
         ))}

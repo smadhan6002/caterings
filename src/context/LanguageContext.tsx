@@ -40,11 +40,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = locales[lang];
 
   const dishName = useCallback((id: string, canonicalName: string): string => {
-    if (id && t.dishes[id]) return t.dishes[id];
-    if (canonicalName && t.dishTranslationsByEnglishName?.[canonicalName.trim()]) {
-      return t.dishTranslationsByEnglishName[canonicalName.trim()];
+    const trimmed = canonicalName?.trim();
+    if (trimmed && t.dishTranslationsByEnglishName?.[trimmed]) {
+      return t.dishTranslationsByEnglishName[trimmed];
     }
-    return canonicalName;
+    if (id && t.dishes[id]) return t.dishes[id];
+    return canonicalName || (id && t.dishes[id]) || '';
   }, [t]);
 
   const categoryName = useCallback((id: string, canonicalName: string): string => {
