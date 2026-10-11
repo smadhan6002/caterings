@@ -40,7 +40,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = locales[lang];
 
   const dishName = useCallback((id: string, canonicalName: string): string => {
-    return t.dishes[id] ?? canonicalName;
+    if (id && t.dishes[id]) return t.dishes[id];
+    if (canonicalName && t.dishTranslationsByEnglishName?.[canonicalName.trim()]) {
+      return t.dishTranslationsByEnglishName[canonicalName.trim()];
+    }
+    return canonicalName;
   }, [t]);
 
   const categoryName = useCallback((id: string, canonicalName: string): string => {

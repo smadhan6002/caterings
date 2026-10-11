@@ -110,14 +110,14 @@ export const FoodQuantitySelector: React.FC = () => {
                 <div className="flex gap-1">
                   <button
                     onClick={() => startEdit(fq)}
-                    aria-label={`Edit ${fq.dishName}`}
+                    aria-label={`Edit ${displayNm}`}
                     className="p-1.5 text-slate-500 hover:text-primary hover:bg-orange-50 rounded-lg transition-colors cursor-pointer"
                   >
                     <Pencil size={13} />
                   </button>
                   <button
                     onClick={() => removeFoodQuantity(item.id)}
-                    aria-label={`Remove ${fq.dishName}`}
+                    aria-label={`Remove ${displayNm}`}
                     className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                   >
                     <Trash2 size={13} />

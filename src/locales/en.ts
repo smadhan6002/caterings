@@ -156,6 +156,9 @@ export const en = {
     sp5: 'Ice Cream Varieties',
   } as Record<string, string>,
 
+  // Normalized English dish name mapping (identity for English)
+  dishTranslationsByEnglishName: {} as Record<string, string>,
+
   // WhatsApp Message strings
   waHeader: 'KANCHI AMBAL CATERING\nNEW CATERING ORDER\n\n',
   waOrderId: 'Order ID',

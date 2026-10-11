@@ -8,6 +8,7 @@ import {
   getOrderPaymentStatus,
 } from '../../services/orderService';
 import type { Order, OrderStatus, OrderPayment, PaymentMethod } from '../../types/admin';
+import { ta } from '../../locales/ta';
 
 const ORDER_STATUSES: OrderStatus[] = [
   'Pending', 'Confirmed', 'In Preparation', 'Ready', 'Completed', 'Cancelled',
@@ -289,12 +290,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order: initialOrder, onClose,
             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
               <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Selected Dishes ({order.items.length})</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {order.items.map((item, i) => (
-                  <div key={i} className="flex items-center text-sm text-slate-800">
-                    <span className="text-primary mr-2">•</span>
-                    <span className="font-medium">{item.dishName}</span>
-                  </div>
-                ))}
+                {order.items.map((item, i) => {
+                  const tamilName = (item.dishId && ta.dishes[item.dishId]) || ta.dishTranslationsByEnglishName?.[item.dishName];
+                  return (
+                    <div key={i} className="flex items-center text-sm text-slate-800">
+                      <span className="text-primary mr-2">•</span>
+                      <span className="font-medium">{item.dishName}</span>
+                      {tamilName && (
+                        <span className="text-xs text-slate-500 font-normal ml-1.5">({tamilName})</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -303,15 +310,21 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order: initialOrder, onClose,
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-3">Additional Food Quantities</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {order.foodQuantities.map((fq, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm text-slate-800 bg-white px-3 py-2 border border-slate-100 rounded-lg shadow-sm">
-                      <div className="flex items-center truncate mr-2">
-                        <span className="text-primary mr-2">•</span>
-                        <span className="font-medium truncate">{fq.dishName}</span>
+                  {order.foodQuantities.map((fq, i) => {
+                    const tamilName = (fq.dishId && ta.dishes[fq.dishId]) || ta.dishTranslationsByEnglishName?.[fq.dishName];
+                    return (
+                      <div key={i} className="flex items-center justify-between text-sm text-slate-800 bg-white px-3 py-2 border border-slate-100 rounded-lg shadow-sm">
+                        <div className="flex items-center truncate mr-2">
+                          <span className="text-primary mr-2">•</span>
+                          <span className="font-medium truncate">{fq.dishName}</span>
+                          {tamilName && (
+                            <span className="text-xs text-slate-500 font-normal ml-1.5 flex-shrink-0">({tamilName})</span>
+                          )}
+                        </div>
+                        <span className="font-bold text-slate-900 flex-shrink-0">{fq.quantity} kg</span>
                       </div>
-                      <span className="font-bold text-slate-900 flex-shrink-0">{fq.quantity} kg</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

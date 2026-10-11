@@ -25,7 +25,8 @@ export const generateWhatsAppLink = (order: Order, t: Translations): string => {
   
   message += `${t.waSelectedDishes}\n`;
   order.items.forEach((item, index) => {
-    message += `${index + 1}. ${item.dishName}\n`;
+    const displayName = (item.dishId && t.dishes[item.dishId]) || t.dishTranslationsByEnglishName?.[item.dishName] || item.dishName;
+    message += `${index + 1}. ${displayName}\n`;
   });
   message += `\n`;
 
@@ -34,7 +35,8 @@ export const generateWhatsAppLink = (order: Order, t: Translations): string => {
   const quantities = order.foodQuantities ?? [];
   if (quantities.length > 0) {
     quantities.forEach((fq, index) => {
-      message += `${index + 1}. ${fq.dishName} — ${fq.quantity} ${t.waKgUnit}\n`;
+      const displayName = (fq.dishId && t.dishes[fq.dishId]) || t.dishTranslationsByEnglishName?.[fq.dishName] || fq.dishName;
+      message += `${index + 1}. ${displayName} — ${fq.quantity} ${t.waKgUnit}\n`;
     });
   } else {
     message += `${t.waNoneKg}\n`;

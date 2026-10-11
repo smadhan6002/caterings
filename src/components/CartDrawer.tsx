@@ -101,7 +101,7 @@ export const CartDrawer: React.FC = () => {
                         <button 
                           onClick={() => removeItem(item.id)}
                           className="text-red-500 hover:text-red-600 text-sm font-medium px-2 py-1 rounded hover:bg-red-50"
-                          aria-label={`Remove ${item.name}`}
+                          aria-label={`Remove ${dishName(item.id, item.name)}`}
                         >
                           {t.remove}
                         </button>
